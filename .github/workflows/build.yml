@@ -1,0 +1,35 @@
+name: PlatformIO CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio/.cache
+          key: ${{ runner.os }}-pio-${{ hashFiles('platformio.ini') }}
+          restore-keys: |
+            ${{ runner.os }}-pio-
+
+      - name: Install PlatformIO
+        run: pip install --upgrade platformio
+
+      # config.h は gitignore 対象のためテンプレートから生成(ビルド確認用のダミー値)
+      - name: Create config.h from template
+        run: cp include/config.h.example include/config.h
+
+      - name: Build firmware
+        run: pio run
