@@ -6,19 +6,24 @@ ATOM Matrix + [ATOM Mate for toio](https://www.switch-science.com/products/8500)
 
 ## 構成
 
-```
-ATOM Matrix (+ ATOM Mate for toio)
-   │  Wi-Fi (UDP, micro-ROS)
-   ▼
-micro-ros-agent (PC)
-   │
-   ▼
-ROS 2 Jazzy トピック /toio/range (sensor_msgs/Range, 10Hz)
+```mermaid
+graph TD
+    subgraph device["ATOM Matrix + ATOM Mate for toio"]
+        sensor["VL53L0X ToF 距離センサ<br>(ATOM Mate for toio 内蔵)"]
+        atom["ATOM Matrix<br>(本ファームウェア)"]
+        sensor -- "I2C (SDA=G25, SCL=G21)" --> atom
+    end
+    subgraph pc["PC (ROS 2 Jazzy)"]
+        agent["micro-ros-agent"]
+        topic["トピック /toio/range<br>(sensor_msgs/Range, 10Hz)"]
+        agent --> topic
+    end
+    atom -- "Wi-Fi (UDP, micro-ROS)" --> agent
 ```
 
 - センサ接続: ATOM Mate for toio 装着のみ(I2C: SDA=G25, SCL=G21)。追加配線不要。
 - QoS: best-effort(センサストリームの標準)
-- LED ステータス表示: 赤=Wi-Fi 接続中 / 黄=agent 待ち / 緑=publish 中
+- ステータス表示: **ATOM Matrix 本体の 5x5 LED マトリクス**で表示(赤=Wi-Fi 接続中 / 黄=agent 待ち / 緑=publish 中)。本 README で「LED」と書いた場合はすべてこの ATOM Matrix の LED を指します(toio 本体にも LED がありますが、本ファームウェアからは制御していません)。
 
 ## 必要なもの
 
@@ -90,7 +95,7 @@ ros2 topic hz /toio/range       # 約 10Hz
 - [ ] `include/config.h` に Wi-Fi SSID/パスワードと agent PC の IP を設定
 - [ ] `pio run -t upload` で書き込み成功
 - [ ] `pio device monitor`(115200bps)で `VL53L0X initialized` が出る(出ない場合は Mate の装着を確認)
-- [ ] LED が赤(Wi-Fi 接続中)→ 黄(agent 待ち)に遷移する
+- [ ] ATOM Matrix の LED が赤(Wi-Fi 接続中)→ 黄(agent 待ち)に遷移する
 - [ ] PC 側で micro-ros-agent(UDP, ポート8888)を起動すると LED が緑になり、シリアルに `micro-ROS agent connected` が出る
 - [ ] `ros2 topic list` に `/toio/range` が表示される
 - [ ] `ros2 topic echo /toio/range` で手をかざすと `range` が変化する(単位 m)
@@ -111,6 +116,6 @@ ros2 topic hz /toio/range       # 約 10Hz
 
 ## トラブルシューティング
 
-- **LED が赤のまま**: Wi-Fi に接続できていません。SSID/パスワードを確認してください(2.4GHz 帯のみ対応)。
-- **LED が黄のまま**: agent に接続できていません。`AGENT_IP` が PC の IP と一致しているか、agent が起動しているか、ファイアウォールで UDP 8888 が塞がれていないか確認してください。
+- **ATOM Matrix の LED が赤のまま**: Wi-Fi に接続できていません。SSID/パスワードを確認してください(2.4GHz 帯のみ対応)。
+- **ATOM Matrix の LED が黄のまま**: agent に接続できていません。`AGENT_IP` が PC の IP と一致しているか、agent が起動しているか、ファイアウォールで UDP 8888 が塞がれていないか確認してください。
 - **`VL53L0X not found` がシリアルに出る**: ATOM Mate for toio の装着(ピン接触)を確認してください。
