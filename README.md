@@ -88,21 +88,6 @@ ros2 topic echo /toio/range     # 手をかざすと range が変化する
 ros2 topic hz /toio/range       # 約 10Hz
 ```
 
-## 実機確認チェックリスト(未実施)
-
-ビルド成功(`pio run`、2026-08-12)までは確認済み。実機での動作確認は未実施のため、以下を順に確認する:
-
-- [ ] `include/config.h` に Wi-Fi SSID/パスワードと agent PC の IP を設定
-- [ ] `pio run -t upload` で書き込み成功
-- [ ] `pio device monitor`(115200bps)で `VL53L0X initialized` が出る(出ない場合は Mate の装着を確認)
-- [ ] ATOM Matrix の LED が赤(Wi-Fi 接続中)→ 黄(agent 待ち)に遷移する
-- [ ] PC 側で micro-ros-agent(UDP, ポート8888)を起動すると LED が緑になり、シリアルに `micro-ROS agent connected` が出る
-- [ ] `ros2 topic list` に `/toio/range` が表示される
-- [ ] `ros2 topic echo /toio/range` で手をかざすと `range` が変化する(単位 m)
-- [ ] 何も無い方向に向けると `range: inf`(out of range)になる
-- [ ] `ros2 topic hz /toio/range` が約 10Hz
-- [ ] agent を Ctrl+C で止める → LED が黄に戻る → agent 再起動で緑に復帰する(再接続確認)
-
 ## メッセージ仕様
 
 | フィールド | 値 |
