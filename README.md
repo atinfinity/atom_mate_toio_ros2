@@ -1,5 +1,7 @@
 # atom_mate_toio_ros2
 
+[![PlatformIO CI](https://github.com/atinfinity/atom_mate_toio_ros2/actions/workflows/build.yml/badge.svg)](https://github.com/atinfinity/atom_mate_toio_ros2/actions/workflows/build.yml)
+
 ATOM Matrix + [ATOM Mate for toio](https://www.switch-science.com/products/8500) の内蔵距離センサ(VL53L0X ToF)の測定値を、Wi-Fi 経由で ROS 2 Jazzy のトピック(`sensor_msgs/Range`)として publish するファームウェアです。
 
 ※ ATOM Mate for toio の内蔵距離センサは超音波ではなく **ToF(レーザー)方式の VL53L0X** です(測定範囲 最大2m)。
