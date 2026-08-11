@@ -24,8 +24,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pio-
 
+      # micro_ros_platformio が ~/.platformio/penv を必要とするため、
+      # pip ではなく公式インストーラで導入する(penv が作成される)
       - name: Install PlatformIO
-        run: pip install --upgrade platformio
+        run: |
+          curl -fsSL -o get-platformio.py https://raw.githubusercontent.com/platformio/platformio-core-installer/master/get-platformio.py
+          python3 get-platformio.py
+          echo "$HOME/.platformio/penv/bin" >> "$GITHUB_PATH"
 
       # config.h は gitignore 対象のためテンプレートから生成(ビルド確認用のダミー値)
       - name: Create config.h from template
