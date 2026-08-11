@@ -1,0 +1,19 @@
+// このファイルを config.h にコピーして環境に合わせて編集してください。
+// config.h は .gitignore 対象です。
+#pragma once
+
+// Wi-Fi 接続情報
+#define WIFI_SSID     "your-ssid"
+#define WIFI_PASSWORD "your-password"
+
+// micro-ros-agent を動かす PC の IP アドレスとポート
+#define AGENT_IP      "192.168.1.100"
+#define AGENT_PORT    8888
+
+// ROS 2 設定
+#define ROS_NAMESPACE ""                // ノードの名前空間(通常は空でよい)
+#define TOPIC_NAME    "toio/range"
+#define FRAME_ID      "toio_range_link"
+
+// publish 周期 [ms](100ms = 10Hz)
+#define PUBLISH_PERIOD_MS 100
