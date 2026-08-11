@@ -82,6 +82,16 @@ ros2 run micro_ros_agent micro_ros_agent udp4 --port 8888
 
 agent に接続されると ATOM Matrix の LED が緑になります。
 
+## 単体テスト
+
+ハードウェア非依存のロジック(`lib/toio_range_logic/`: 距離値の変換・out-of-range 判定・タイムスタンプ変換)は、native 環境(ホスト上)で Unity による単体テストを実行できます。実機は不要です。
+
+```bash
+pio test -e native
+```
+
+CI(GitHub Actions)でも push / Pull Request ごとに実行されます。
+
 ## 動作確認
 
 ```bash

@@ -14,6 +14,7 @@
 #include <sensor_msgs/msg/range.h>
 
 #include "config.h"
+#include "toio_range_logic.h"
 
 // ATOM Mate for toio の I2C ピン(ATOM デフォルトの G26/G32 とは異なる)
 static const int I2C_SDA_PIN = 25;
@@ -70,15 +71,9 @@ static void set_status_led(const CRGB &color) {
 }
 
 static void fill_stamp(builtin_interfaces__msg__Time *stamp) {
-  if (rmw_uros_epoch_synchronized()) {
-    int64_t ms = rmw_uros_epoch_millis();
-    stamp->sec = (int32_t)(ms / 1000);
-    stamp->nanosec = (uint32_t)((ms % 1000) * 1000000LL);
-  } else {
-    int64_t ms = millis();
-    stamp->sec = (int32_t)(ms / 1000);
-    stamp->nanosec = (uint32_t)((ms % 1000) * 1000000LL);
-  }
+  int64_t ms = rmw_uros_epoch_synchronized() ? rmw_uros_epoch_millis()
+                                             : (int64_t)millis();
+  toio_range_stamp_from_ms(ms, &stamp->sec, &stamp->nanosec);
 }
 
 static void timer_callback(rcl_timer_t *timer_handle, int64_t last_call_time) {
@@ -87,12 +82,8 @@ static void timer_callback(rcl_timer_t *timer_handle, int64_t last_call_time) {
     return;
   }
   fill_stamp(&range_msg.header.stamp);
-  if (range_valid) {
-    range_msg.range = last_range_mm / 1000.0f;
-  } else {
-    // 検出なしは +Inf で表現(max_range 超え)
-    range_msg.range = INFINITY;
-  }
+  // 検出なし(無効測定)は +Inf で表現
+  range_msg.range = toio_range_to_meters(last_range_mm, range_valid);
   rcl_publish(&publisher, &range_msg, NULL);
 }
 
@@ -146,8 +137,7 @@ static void update_sensor() {
   }
   if (lox.isRangeComplete()) {
     uint16_t mm = lox.readRange();
-    // 8190/8191 は VL53L0X の out-of-range 値
-    if (mm >= 8190 || mm == 65535) {
+    if (toio_range_is_invalid(mm)) {
       range_valid = false;
     } else {
       last_range_mm = mm;
