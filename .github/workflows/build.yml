@@ -39,5 +39,10 @@ jobs:
       - name: Run unit tests (native)
         run: pio test -e native
 
-      - name: Build firmware
+      - name: Build firmware (range mode)
         run: pio run
+
+      - name: Build firmware (scan mode)
+        run: |
+          sed -i 's/#define PUBLISH_MODE PUBLISH_MODE_RANGE/#define PUBLISH_MODE PUBLISH_MODE_SCAN/' include/config.h
+          pio run

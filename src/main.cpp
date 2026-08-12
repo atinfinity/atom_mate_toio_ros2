@@ -11,10 +11,15 @@
 #include <rclc/rclc.h>
 #include <rclc/executor.h>
 #include <rmw_microros/rmw_microros.h>
+#include <sensor_msgs/msg/laser_scan.h>
 #include <sensor_msgs/msg/range.h>
 
 #include "config.h"
 #include "toio_range_logic.h"
+
+#if PUBLISH_MODE != PUBLISH_MODE_RANGE && PUBLISH_MODE != PUBLISH_MODE_SCAN
+#error "PUBLISH_MODE must be PUBLISH_MODE_RANGE or PUBLISH_MODE_SCAN"
+#endif
 
 // ATOM Mate for toio の I2C ピン(ATOM デフォルトの G26/G32 とは異なる)
 static const int I2C_SDA_PIN = 25;
@@ -37,7 +42,12 @@ static rcl_node_t node;
 static rcl_publisher_t publisher;
 static rcl_timer_t timer;
 static rclc_executor_t executor;
+#if PUBLISH_MODE == PUBLISH_MODE_SCAN
+static sensor_msgs__msg__LaserScan scan_msg;
+static float scan_ranges[1];
+#else
 static sensor_msgs__msg__Range range_msg;
+#endif
 
 enum AgentState {
   WAITING_AGENT,
@@ -81,33 +91,70 @@ static void timer_callback(rcl_timer_t *timer_handle, int64_t last_call_time) {
   if (timer_handle == NULL) {
     return;
   }
+#if PUBLISH_MODE == PUBLISH_MODE_SCAN
+  fill_stamp(&scan_msg.header.stamp);
+  // 検出なし(無効測定)は +Inf で表現
+  scan_msg.ranges.data[0] = toio_range_to_meters(last_range_mm, range_valid);
+  rcl_publish(&publisher, &scan_msg, NULL);
+#else
   fill_stamp(&range_msg.header.stamp);
   // 検出なし(無効測定)は +Inf で表現
   range_msg.range = toio_range_to_meters(last_range_mm, range_valid);
   rcl_publish(&publisher, &range_msg, NULL);
+#endif
 }
 
-static void init_range_msg() {
-  sensor_msgs__msg__Range__init(&range_msg);
+static void set_frame_id(std_msgs__msg__Header *header) {
   static char frame_id_buf[] = FRAME_ID;
-  range_msg.header.frame_id.data = frame_id_buf;
-  range_msg.header.frame_id.size = strlen(frame_id_buf);
-  range_msg.header.frame_id.capacity = sizeof(frame_id_buf);
+  header->frame_id.data = frame_id_buf;
+  header->frame_id.size = strlen(frame_id_buf);
+  header->frame_id.capacity = sizeof(frame_id_buf);
+}
+
+#if PUBLISH_MODE == PUBLISH_MODE_SCAN
+static void init_msg() {
+  sensor_msgs__msg__LaserScan__init(&scan_msg);
+  set_frame_id(&scan_msg.header);
+  // 単一点センサのため正面方向 1 ビームの LaserScan として配信する
+  scan_msg.angle_min = 0.0f;
+  scan_msg.angle_max = 0.0f;
+  scan_msg.angle_increment = 0.0f;
+  scan_msg.time_increment = 0.0f;
+  scan_msg.scan_time = PUBLISH_PERIOD_MS / 1000.0f;
+  scan_msg.range_min = 0.03f;
+  scan_msg.range_max = 2.0f;
+  scan_ranges[0] = 0.0f;
+  scan_msg.ranges.data = scan_ranges;
+  scan_msg.ranges.size = 1;
+  scan_msg.ranges.capacity = 1;
+}
+#else
+static void init_msg() {
+  sensor_msgs__msg__Range__init(&range_msg);
+  set_frame_id(&range_msg.header);
   range_msg.radiation_type = sensor_msgs__msg__Range__INFRARED;
   range_msg.field_of_view = 0.44f;  // VL53L0X の FoV 約25°
   range_msg.min_range = 0.03f;
   range_msg.max_range = 2.0f;
   range_msg.range = 0.0f;
 }
+#endif
 
 static bool create_entities() {
   allocator = rcl_get_default_allocator();
   RCCHECK(rclc_support_init(&support, 0, NULL, &allocator));
   RCCHECK(rclc_node_init_default(&node, "atom_toio_range_node", ROS_NAMESPACE, &support));
+#if PUBLISH_MODE == PUBLISH_MODE_SCAN
+  RCCHECK(rclc_publisher_init_best_effort(
+      &publisher, &node,
+      ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, LaserScan),
+      SCAN_TOPIC_NAME));
+#else
   RCCHECK(rclc_publisher_init_best_effort(
       &publisher, &node,
       ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Range),
-      TOPIC_NAME));
+      RANGE_TOPIC_NAME));
+#endif
   RCCHECK(rclc_timer_init_default2(
       &timer, &support, RCL_MS_TO_NS(PUBLISH_PERIOD_MS), timer_callback, true));
   executor = rclc_executor_get_zero_initialized_executor();
@@ -170,7 +217,7 @@ void setup() {
   Serial.print("Wi-Fi connected: ");
   Serial.println(WiFi.localIP());
 
-  init_range_msg();
+  init_msg();
   set_status_led(CRGB::Yellow);  // 黄: agent 待ち
 }
 

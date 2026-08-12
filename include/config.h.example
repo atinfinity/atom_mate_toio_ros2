@@ -12,8 +12,17 @@
 
 // ROS 2 設定
 #define ROS_NAMESPACE ""                // ノードの名前空間(通常は空でよい)
-#define TOPIC_NAME    "toio/range"
-#define FRAME_ID      "toio_range_link"
+
+// 配信モード(どちらか一方のみ配信される)
+//   PUBLISH_MODE_RANGE: sensor_msgs/Range を RANGE_TOPIC_NAME に配信
+//   PUBLISH_MODE_SCAN:  sensor_msgs/LaserScan(1ビーム)を SCAN_TOPIC_NAME に配信
+#define PUBLISH_MODE_RANGE 0
+#define PUBLISH_MODE_SCAN  1
+#define PUBLISH_MODE PUBLISH_MODE_RANGE
+
+#define RANGE_TOPIC_NAME "toio/range"
+#define SCAN_TOPIC_NAME  "toio/scan"
+#define FRAME_ID         "toio_range_link"
 
 // publish 周期 [ms](100ms = 10Hz)
 #define PUBLISH_PERIOD_MS 100
