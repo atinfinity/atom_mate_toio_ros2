@@ -116,13 +116,14 @@ static void init_msg() {
   sensor_msgs__msg__LaserScan__init(&scan_msg);
   set_frame_id(&scan_msg.header);
   // 単一点センサのため正面方向 1 ビームの LaserScan として配信する
-  scan_msg.angle_min = 0.0f;
-  scan_msg.angle_max = 0.0f;
-  scan_msg.angle_increment = 0.0f;
-  scan_msg.time_increment = 0.0f;
-  scan_msg.scan_time = PUBLISH_PERIOD_MS / 1000.0f;
-  scan_msg.range_min = 0.03f;
-  scan_msg.range_max = 2.0f;
+  const toio_scan_params_t p = toio_scan_params(PUBLISH_PERIOD_MS);
+  scan_msg.angle_min = p.angle_min;
+  scan_msg.angle_max = p.angle_max;
+  scan_msg.angle_increment = p.angle_increment;
+  scan_msg.time_increment = p.time_increment;
+  scan_msg.scan_time = p.scan_time;
+  scan_msg.range_min = p.range_min;
+  scan_msg.range_max = p.range_max;
   scan_ranges[0] = 0.0f;
   scan_msg.ranges.data = scan_ranges;
   scan_msg.ranges.size = 1;
@@ -134,8 +135,8 @@ static void init_msg() {
   set_frame_id(&range_msg.header);
   range_msg.radiation_type = sensor_msgs__msg__Range__INFRARED;
   range_msg.field_of_view = 0.44f;  // VL53L0X の FoV 約25°
-  range_msg.min_range = 0.03f;
-  range_msg.max_range = 2.0f;
+  range_msg.min_range = TOIO_RANGE_MIN_M;
+  range_msg.max_range = TOIO_RANGE_MAX_M;
   range_msg.range = 0.0f;
 }
 #endif
