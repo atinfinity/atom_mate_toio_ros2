@@ -15,6 +15,8 @@ ATOM Matrix + [ATOM Mate for toio](https://www.switch-science.com/products/8500)
 - 接続状態を ATOM Matrix の 5x5 LED で表示(赤=Wi-Fi 接続中 / 黄=agent 待ち / 緑=publish 中)
 - 追加配線は不要(ATOM Mate for toio を装着するだけ)
 
+<img src="images/led_status.svg" width="600" alt="LED 状態表示の遷移図: 赤=Wi-Fi 接続中 → Wi-Fi 接続完了で黄=agent 待ち → agent 接続完了で緑=publish 中">
+
 ## クイックスタート
 
 ```bash
