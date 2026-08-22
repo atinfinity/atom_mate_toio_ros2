@@ -6,6 +6,12 @@ ATOM Matrix + [ATOM Mate for toio](https://www.switch-science.com/products/8500)
 
 ※ ATOM Mate for toio の内蔵距離センサは超音波ではなく **ToF(レーザー)方式の VL53L0X** です(測定範囲 最大2m)。
 
+## 外観イメージ
+
+<img src="images/atom_mate_toio.svg" width="560" alt="toio コアキューブの上に ATOM Mate for toio を載せ、その天面に ATOM Matrix を取り付けた構成のイメージ図">
+
+※ 公開されている製品写真・寸法をもとに作成したイメージ図です。細部は実物と異なります。
+
 ## 構成
 
 ```mermaid
