@@ -1,0 +1,23 @@
+services:
+  # ファームウェアのビルド: docker compose run --rm build
+  build:
+    build: .
+    volumes:
+      - .:/work
+      # プラットフォーム・ツールチェーン・libmicroros のキャッシュ(2回目以降を速くする)
+      - pio-cache:/root/.platformio
+    # Linux ホストなら以下を有効にするとコンテナから書き込みもできる
+    #   docker compose run --rm build pio run -t upload
+    # devices:
+    #   - /dev/ttyUSB0:/dev/ttyUSB0
+
+  # micro-ros-agent: docker compose up agent
+  # --net=host を使わずポート公開にしているので macOS / Windows の Docker Desktop でも動く
+  agent:
+    image: microros/micro-ros-agent:jazzy
+    command: udp4 --port 8888
+    ports:
+      - "8888:8888/udp"
+
+volumes:
+  pio-cache:
