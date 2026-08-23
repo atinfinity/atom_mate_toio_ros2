@@ -39,3 +39,7 @@ ros2 topic echo /toio/range                    # 手をかざすと range が変
 | [構成とメッセージ仕様](docs/architecture.md) | システム構成、配信モード、トピックとメッセージの詳細 |
 | [単体テスト](docs/testing.md) | native 環境での単体テストの実行方法 |
 | [トラブルシューティング](docs/troubleshooting.md) | LED が赤/黄のままなど、よくある問題と対処 |
+
+## ライセンス
+
+[Apache License 2.0](LICENSE)
