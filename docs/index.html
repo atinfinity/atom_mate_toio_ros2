@@ -11,6 +11,11 @@
   .note { background: #fff8e1; border-color: #f0d080; }
   code { background: #f2f2f2; padding: 0 .3em; border-radius: 3px; }
   .ver { color: #888; font-size: .85rem; }
+  .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .mode { border: 1px solid #ddd; border-radius: 8px; padding: .8rem 1rem; }
+  .mode h3 { margin: 0 0 .3rem; font-size: 1rem; }
+  .mode p { margin: 0 0 .6rem; font-size: .9rem; color: #444; }
+  @media (max-width: 480px) { .modes { grid-template-columns: 1fr; } }
   esp-web-install-button { --esp-tools-button-color: #1976d2; --esp-tools-button-text-color: #fff; }
 </style>
 <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
@@ -36,10 +41,25 @@
     <li>下のボタンを押し、表示されたシリアルポートを選んで「接続」する</li>
     <li>「INSTALL」を選ぶ。保存済みの Wi-Fi / agent 設定を消したい場合だけ「Erase device」にチェックを入れる</li>
   </ol>
-  <esp-web-install-button manifest="manifest.json">
-    <span slot="unsupported">このブラウザは Web Serial に対応していません。PC 版の Chrome / Edge で開いてください。</span>
-    <span slot="not-allowed">HTTPS で開く必要があります。</span>
-  </esp-web-install-button>
+  <p>配信するメッセージ型に合わせてどちらか一方を選んでください(後から入れ替えても Wi-Fi などの設定は残ります)。</p>
+  <div class="modes">
+    <div class="mode">
+      <h3>Range(標準)</h3>
+      <p><code>sensor_msgs/Range</code> を <code>/toio/range</code> に配信。迷ったらこちら</p>
+      <esp-web-install-button manifest="manifest.json">
+        <span slot="unsupported">このブラウザは Web Serial に対応していません。PC 版の Chrome / Edge で開いてください。</span>
+        <span slot="not-allowed">HTTPS で開く必要があります。</span>
+      </esp-web-install-button>
+    </div>
+    <div class="mode">
+      <h3>LaserScan</h3>
+      <p><code>sensor_msgs/LaserScan</code>(正面 1 ビーム)を <code>/toio/scan</code> に配信。nav2 の obstacle layer など LaserScan しか受け付けないツール向け</p>
+      <esp-web-install-button manifest="manifest-scan.json">
+        <span slot="unsupported">このブラウザは Web Serial に対応していません。PC 版の Chrome / Edge で開いてください。</span>
+        <span slot="not-allowed">HTTPS で開く必要があります。</span>
+      </esp-web-install-button>
+    </div>
+  </div>
 </div>
 
 <div class="card">
@@ -47,7 +67,7 @@
   <ol>
     <li>初回は自動で設定モード (LED が青く回転) になります。スマホ/PC から Wi-Fi <code>AtomToio-XXXX</code> に接続してください (パスワードなし)</li>
     <li>設定ページが開かない場合は <code>http://192.168.4.1/</code> を開き、Wi-Fi SSID / パスワード、micro-ros-agent を動かす PC の IP アドレスとポート (通常 8888) を入力して「保存して再起動」</li>
-    <li>PC で micro-ros-agent を起動すると LED が緑になり、<code>/toio/range</code> トピックが流れます</li>
+    <li>PC で micro-ros-agent を起動すると LED が緑になり、<code>/toio/range</code>(LaserScan 版は <code>/toio/scan</code>)トピックが流れます</li>
   </ol>
   <p>設定をやり直すには、ATOM Matrix のボタンを押しながら USB を挿し直します (再び青い回転になります)。
   agent の起動方法やトラブルシューティングは

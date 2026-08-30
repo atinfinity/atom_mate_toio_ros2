@@ -21,8 +21,8 @@ graph TD
 - QoS: best-effort(センサストリームの標準)
 - 実行時設定: Wi-Fi SSID / パスワード、micro-ros-agent の IP / ポート、ROS 2 namespace は NVS に保存され、設定モード(SoftAP `AtomToio-XXXX` + 設定ページ `http://192.168.4.1/`)で変更する。設定が無いとき、または起動時にボタンを押していると設定モードに入る。設定モード中は micro-ROS もセンサの publish も動かない
 - 配信モード(`platformio.ini` の env でビルド時に選択。どちらか一方のみ配信):
-  - `m5stack-atom`(`PUBLISH_MODE_RANGE`、デフォルト): `sensor_msgs/Range` を `toio/range` に配信。ブラウザから配布するバイナリはこちら
-  - `m5stack-atom-scan`(`PUBLISH_MODE_SCAN`): `sensor_msgs/LaserScan`(正面方向の1ビーム)を `toio/scan` に配信。LaserScan しか受け付けないツール(nav2 の obstacle layer 等)にそのまま渡したい場合に使用。自分でビルドするか、GitHub Release の `-scan.app.bin` を `0x10000` に書き込む
+  - `m5stack-atom`(`PUBLISH_MODE_RANGE`、デフォルト): `sensor_msgs/Range` を `toio/range` に配信。インストールページの「Range(標準)」
+  - `m5stack-atom-scan`(`PUBLISH_MODE_SCAN`): `sensor_msgs/LaserScan`(正面方向の1ビーム)を `toio/scan` に配信。LaserScan しか受け付けないツール(nav2 の obstacle layer 等)にそのまま渡したい場合に使用。インストールページの「LaserScan」
 - namespace を設定した場合、トピックは `/<namespace>/toio/range` のようになる(複数台を同時に使うときに衝突を避けられる)
 - ステータス: **ATOM Matrix 本体の 5x5 LED マトリクス**で表示(青の回転=設定モード / 赤=Wi-Fi 接続中 / 黄=agent 待ち / 緑=publish 中)。本ドキュメントで「LED」と書いた場合はすべてこの ATOM Matrix の LED を指します(toio 本体にも LED がありますが、本ファームウェアからは制御していません)。
 

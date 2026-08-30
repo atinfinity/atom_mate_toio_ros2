@@ -13,7 +13,7 @@ ATOM Matrix + [ATOM Mate for toio](https://www.switch-science.com/products/8500)
 - VL53L0X ToF 距離センサ(測定範囲 最大2m)の測定値を Wi-Fi(micro-ROS)経由で約 10Hz で配信
 - **PC のブラウザ(Chrome / Edge)から書き込み**できる。PlatformIO や Docker は不要
 - Wi-Fi と micro-ros-agent の IP は本体の設定モード(SoftAP + 設定ページ)からスマホ/PC で設定。ソースに直書きしない
-- 配信モードをビルド時に選択: `sensor_msgs/Range`(デフォルト。配布バイナリはこちら)または `sensor_msgs/LaserScan`
+- 配信モードを書き込み時に選択: `sensor_msgs/Range`(標準)または `sensor_msgs/LaserScan`
 - 接続状態を ATOM Matrix の 5x5 LED で表示(青=設定モード / 赤=Wi-Fi 接続中 / 黄=agent 待ち / 緑=publish 中)
 - 追加配線は不要(ATOM Mate for toio を装着するだけ)
 
@@ -21,7 +21,7 @@ ATOM Matrix + [ATOM Mate for toio](https://www.switch-science.com/products/8500)
 
 ## クイックスタート
 
-1. ATOM Matrix を USB で PC に接続し、PC 版 Chrome / Edge で **インストールページ** <https://atinfinity.github.io/atom_mate_toio_ros2/> を開いて書き込む(PlatformIO 不要)
+1. ATOM Matrix を USB で PC に接続し、PC 版 Chrome / Edge で **インストールページ** <https://atinfinity.github.io/atom_mate_toio_ros2/> を開き、Range(標準)か LaserScan を選んで書き込む(PlatformIO 不要)
 2. 初回起動で設定モード(LED が青く回転)になるので、スマホ/PC から Wi-Fi `AtomToio-XXXX` に接続する
 3. 開いた設定ページで Wi-Fi SSID / パスワード、micro-ros-agent を動かす PC の IP アドレスを入力して「保存して再起動」
 4. PC 側で micro-ros-agent を起動し、トピックを確認する
