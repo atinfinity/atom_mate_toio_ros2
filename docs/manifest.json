@@ -1,0 +1,13 @@
+{
+  "name": "atom_mate_toio_ros2",
+  "version": "__VERSION__",
+  "new_install_prompt_erase": false,
+  "builds": [
+    {
+      "chipFamily": "ESP32",
+      "parts": [
+        { "path": "firmware/atom_mate_toio_ros2.merged.bin", "offset": 0 }
+      ]
+    }
+  ]
+}

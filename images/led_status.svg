@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 200" font-family="'Hiragino Sans','Noto Sans JP','Yu Gothic',sans-serif">
-  <!-- ATOM Matrix の 5x5 LED による状態表示(赤=Wi-Fi 接続中 / 黄=agent 待ち / 緑=publish 中)のイメージ図 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 200" font-family="'Hiragino Sans','Noto Sans JP','Yu Gothic',sans-serif">
+  <!-- ATOM Matrix の 5x5 LED による状態表示(青=設定モード / 赤=Wi-Fi 接続中 / 黄=agent 待ち / 緑=publish 中)のイメージ図 -->
   <defs>
     <marker id="arrow2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="#9a9aa2"/>
@@ -34,31 +34,50 @@
         <rect x="18.16" y="18.16" width="3.04" height="3.04" rx="0.7"/>
       </g>
     </g>
+    <marker id="arrowBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3b82f6"/>
+    </marker>
   </defs>
 
-  <rect x="0" y="0" width="720" height="200" fill="#ffffff"/>
+  <rect x="0" y="0" width="960" height="200" fill="#ffffff"/>
+
+  <!-- 青(回転): 設定モード。外周の4灯だけ点灯し、他は消灯 -->
+  <g transform="translate(40 30) scale(4.5)">
+    <rect x="0" y="0" width="24" height="24" rx="1.5" fill="#34343c" stroke="#17171a" stroke-width="0.4"/>
+    <g fill="#2a2a30" stroke="#1d1d22" stroke-width="0.25"><use href="#leds"/></g>
+    <g stroke="#1a55b0" stroke-width="0.25">
+      <rect x="10.48" y="2.8" width="3.04" height="3.04" rx="0.7" fill="#3b82f6"/>
+      <rect x="14.32" y="2.8" width="3.04" height="3.04" rx="0.7" fill="#3b82f6" opacity="0.7"/>
+      <rect x="18.16" y="2.8" width="3.04" height="3.04" rx="0.7" fill="#3b82f6" opacity="0.45"/>
+      <rect x="18.16" y="6.64" width="3.04" height="3.04" rx="0.7" fill="#3b82f6" opacity="0.25"/>
+    </g>
+    <path d="M12 -1.6 A13.6 13.6 0 0 1 25.6 12" fill="none" stroke="#3b82f6" stroke-width="0.6" stroke-dasharray="1.2 0.8" marker-end="url(#arrowBlue)"/>
+  </g>
+  <text x="94" y="164" text-anchor="middle" font-size="14" fill="#3a3a3f"><tspan font-weight="700" fill="#2563eb">青</tspan>(回転) = 設定モード</text>
+  <line x1="156" y1="84" x2="280" y2="84" stroke="#9a9aa2" stroke-width="1.6" marker-end="url(#arrow2)"/>
+  <text x="219" y="72" text-anchor="middle" font-size="11" fill="#84848c">設定を保存</text>
 
   <!-- 赤: Wi-Fi 接続中 -->
-  <g transform="translate(40 30) scale(4.5)" fill="#e5534b" stroke="#b03a34" stroke-width="0.25">
+  <g transform="translate(280 30) scale(4.5)" fill="#e5534b" stroke="#b03a34" stroke-width="0.25">
     <use href="#matrix"/>
   </g>
-  <text x="94" y="164" text-anchor="middle" font-size="14" fill="#3a3a3f"><tspan font-weight="700" fill="#c9433c">赤</tspan> = Wi-Fi 接続中</text>
+  <text x="334" y="164" text-anchor="middle" font-size="14" fill="#3a3a3f"><tspan font-weight="700" fill="#c9433c">赤</tspan> = Wi-Fi 接続中</text>
 
   <!-- 黄: agent 待ち -->
-  <g transform="translate(290 30) scale(4.5)" fill="#e3b341" stroke="#b8892c" stroke-width="0.25">
+  <g transform="translate(530 30) scale(4.5)" fill="#e3b341" stroke="#b8892c" stroke-width="0.25">
     <use href="#matrix"/>
   </g>
-  <text x="344" y="164" text-anchor="middle" font-size="14" fill="#3a3a3f"><tspan font-weight="700" fill="#b8892c">黄</tspan> = agent 待ち</text>
+  <text x="584" y="164" text-anchor="middle" font-size="14" fill="#3a3a3f"><tspan font-weight="700" fill="#b8892c">黄</tspan> = agent 待ち</text>
 
   <!-- 緑: publish 中 -->
-  <g transform="translate(540 30) scale(4.5)" fill="#3ecf6e" stroke="#27a552" stroke-width="0.25">
+  <g transform="translate(780 30) scale(4.5)" fill="#3ecf6e" stroke="#27a552" stroke-width="0.25">
     <use href="#matrix"/>
   </g>
-  <text x="594" y="164" text-anchor="middle" font-size="14" fill="#3a3a3f"><tspan font-weight="700" fill="#27a552">緑</tspan> = publish 中</text>
+  <text x="834" y="164" text-anchor="middle" font-size="14" fill="#3a3a3f"><tspan font-weight="700" fill="#27a552">緑</tspan> = publish 中</text>
 
   <!-- 遷移矢印 -->
-  <line x1="156" y1="84" x2="280" y2="84" stroke="#9a9aa2" stroke-width="1.6" marker-end="url(#arrow2)"/>
-  <text x="219" y="72" text-anchor="middle" font-size="11" fill="#84848c">Wi-Fi 接続完了</text>
-  <line x1="406" y1="84" x2="530" y2="84" stroke="#9a9aa2" stroke-width="1.6" marker-end="url(#arrow2)"/>
-  <text x="469" y="72" text-anchor="middle" font-size="11" fill="#84848c">agent 接続完了</text>
+  <line x1="396" y1="84" x2="520" y2="84" stroke="#9a9aa2" stroke-width="1.6" marker-end="url(#arrow2)"/>
+  <text x="459" y="72" text-anchor="middle" font-size="11" fill="#84848c">Wi-Fi 接続完了</text>
+  <line x1="646" y1="84" x2="770" y2="84" stroke="#9a9aa2" stroke-width="1.6" marker-end="url(#arrow2)"/>
+  <text x="709" y="72" text-anchor="middle" font-size="11" fill="#84848c">agent 接続完了</text>
 </svg>

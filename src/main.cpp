@@ -1,5 +1,7 @@
 // ATOM Matrix + ATOM Mate for toio (VL53L0X ToF センサ)
 // 距離を sensor_msgs/Range として micro-ROS (Wi-Fi UDP) で publish する。
+// Wi-Fi / agent の設定は NVS に保存され、未設定時または起動時にボタンを
+// 押していると設定モード(SoftAP + 設定ページ)に入る。
 #include <Arduino.h>
 #include <Wire.h>
 #include <WiFi.h>
@@ -14,7 +16,9 @@
 #include <sensor_msgs/msg/laser_scan.h>
 #include <sensor_msgs/msg/range.h>
 
-#include "config.h"
+#include "app_config.h"
+#include "config_portal.h"
+#include "settings.h"
 #include "toio_range_logic.h"
 
 #if PUBLISH_MODE != PUBLISH_MODE_RANGE && PUBLISH_MODE != PUBLISH_MODE_SCAN
@@ -29,6 +33,11 @@ static const int I2C_SCL_PIN = 21;
 static const int LED_PIN = 27;
 static const int NUM_LEDS = 25;
 static CRGB leds[NUM_LEDS];
+
+// ATOM Matrix 前面の押しボタン(押下で LOW)
+static const int BUTTON_PIN = 39;
+
+static Settings settings;
 
 static Adafruit_VL53L0X lox;
 static bool sensor_ok = false;
@@ -78,6 +87,22 @@ static AgentState agent_state = WAITING_AGENT;
 static void set_status_led(const CRGB &color) {
   fill_solid(leds, NUM_LEDS, color);
   FastLED.show();
+}
+
+// 設定モード: 青い光が 5x5 の外周を回る
+static void config_mode_led_tick() {
+  static const uint8_t ring[16] = {0, 1, 2, 3, 4, 9, 14, 19, 24, 23, 22, 21, 20, 15, 10, 5};
+  static unsigned long last = 0;
+  static uint8_t head = 0;
+  if (millis() - last < 80) return;
+  last = millis();
+  fill_solid(leds, NUM_LEDS, CRGB::Black);
+  for (int i = 0; i < 4; ++i) {
+    uint8_t idx = ring[(head + 16 - i) % 16];
+    leds[idx] = CRGB(0, 0, 255 >> i);  // 先頭が明るく、尾が暗い
+  }
+  FastLED.show();
+  head = (head + 1) % 16;
 }
 
 static void fill_stamp(builtin_interfaces__msg__Time *stamp) {
@@ -144,7 +169,7 @@ static void init_msg() {
 static bool create_entities() {
   allocator = rcl_get_default_allocator();
   RCCHECK(rclc_support_init(&support, 0, NULL, &allocator));
-  RCCHECK(rclc_node_init_default(&node, "atom_toio_range_node", ROS_NAMESPACE, &support));
+  RCCHECK(rclc_node_init_default(&node, "atom_toio_range_node", settings.ros_namespace, &support));
 #if PUBLISH_MODE == PUBLISH_MODE_SCAN
   RCCHECK(rclc_publisher_init_best_effort(
       &publisher, &node,
@@ -196,9 +221,21 @@ static void update_sensor() {
 
 void setup() {
   Serial.begin(115200);
+  Serial.println("atom_mate_toio_ros2 " FW_VERSION);
 
   FastLED.addLeds<WS2812B, LED_PIN, GRB>(leds, NUM_LEDS);
   FastLED.setBrightness(20);
+
+  // 設定が無い、または起動時にボタンが押されていれば設定モードへ(戻ってこない)
+  pinMode(BUTTON_PIN, INPUT);
+  bool configured = settings_load(&settings);
+  bool button_held = digitalRead(BUTTON_PIN) == LOW;
+  if (!configured || button_held) {
+    Serial.println(configured ? "Button held at boot: entering config mode"
+                              : "No settings found: entering config mode");
+    config_portal_run(&settings, config_mode_led_tick);
+  }
+
   set_status_led(CRGB::Red);  // 赤: Wi-Fi 接続中
 
   Wire.begin(I2C_SDA_PIN, I2C_SCL_PIN);
@@ -211,10 +248,13 @@ void setup() {
   }
 
   // Wi-Fi 接続 + micro-ROS UDP トランスポート設定(接続完了までブロック)
+  Serial.printf("Connecting to Wi-Fi \"%s\" (agent %s:%u, namespace \"%s\")\n",
+                settings.ssid, settings.agent_ip, settings.agent_port,
+                settings.ros_namespace);
   IPAddress agent_ip;
-  agent_ip.fromString(AGENT_IP);
-  set_microros_wifi_transports((char *)WIFI_SSID, (char *)WIFI_PASSWORD,
-                               agent_ip, AGENT_PORT);
+  agent_ip.fromString(settings.agent_ip);
+  set_microros_wifi_transports(settings.ssid, settings.password, agent_ip,
+                               settings.agent_port);
   Serial.print("Wi-Fi connected: ");
   Serial.println(WiFi.localIP());
 
