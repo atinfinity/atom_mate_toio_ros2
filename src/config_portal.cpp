@@ -12,8 +12,12 @@ static const IPAddress AP_MASK(255, 255, 255, 0);
 
 static WebServer server(80);
 static DNSServer dns;
+static Settings saved_settings;  // 起動時に読み込んだ保存済み設定
 static Settings pending;
 static bool saved = false;
+
+// 直近の Wi-Fi スキャン結果(SSID を <option> にしたもの)
+static String scan_options;
 
 static const char PAGE_HEAD[] PROGMEM = R"HTML(<!DOCTYPE html>
 <html lang="ja"><head><meta charset="UTF-8">
@@ -32,8 +36,12 @@ small{color:#666}button{margin-top:1.5rem;width:100%;font-size:1.05rem;padding:.
 
 static const char PAGE_FORM[] PROGMEM = R"HTML(
 <form method="POST" action="/save">
-<label>Wi-Fi SSID<input name="ssid" maxlength="32" required value="%SSID%"><small>2.4GHz 帯のみ対応</small></label>
-<label>Wi-Fi パスワード<input name="pass" type="password" maxlength="63" placeholder="(再入力してください)"></label>
+<label>Wi-Fi アクセスポイント
+<select id="aplist" onchange="if(this.value){document.querySelector('[name=ssid]').value=this.value}">
+<option value="">-- 一覧から選ぶ --</option>%APLIST%</select>
+<small>見つからない場合は <a href="/?scan=1">再スキャン</a> するか、下に直接入力してください(2.4GHz 帯のみ対応)</small></label>
+<label>Wi-Fi SSID<input name="ssid" maxlength="32" required value="%SSID%"></label>
+<label>Wi-Fi パスワード<input name="pass" type="password" maxlength="63" placeholder="%PASSHINT%"><small>%PASSNOTE%</small></label>
 <label>micro-ros-agent の IP アドレス<input name="ip" inputmode="decimal" placeholder="192.168.1.100" required value="%IP%"><small>agent を動かす PC 自身の LAN 上の IP</small></label>
 <label>micro-ros-agent のポート<input name="port" inputmode="numeric" required value="%PORT%"></label>
 <label>ROS 2 namespace(任意)<input name="ns" maxlength="63" placeholder="空欄でよい。複数台なら robot1 など" value="%NS%"></label>
@@ -62,6 +70,45 @@ static String html_escape(const char *s) {
   return out;
 }
 
+// 周辺の AP をスキャンして <option> 群を作る(電波の強い順、SSID の重複は除く)
+static void scan_networks() {
+  scan_options = "";
+  int n = WiFi.scanNetworks(false, false);
+  if (n <= 0) {
+    Serial.printf("Wi-Fi scan: %d networks\n", n);
+    WiFi.scanDelete();
+    return;
+  }
+  // RSSI 降順に並べる
+  int order[64];
+  int count = n < 64 ? n : 64;
+  for (int i = 0; i < count; ++i) order[i] = i;
+  for (int i = 1; i < count; ++i) {
+    int k = order[i];
+    int j = i - 1;
+    while (j >= 0 && WiFi.RSSI(order[j]) < WiFi.RSSI(k)) {
+      order[j + 1] = order[j];
+      --j;
+    }
+    order[j + 1] = k;
+  }
+  String seen;  // "\x01ssid\x01" を連結した重複判定用
+  for (int i = 0; i < count; ++i) {
+    String ssid = WiFi.SSID(order[i]);
+    if (ssid.length() == 0) continue;  // ステルス AP
+    String key = "\x01" + ssid + "\x01";
+    if (seen.indexOf(key) >= 0) continue;
+    seen += key;
+    String esc = html_escape(ssid.c_str());
+    scan_options += "<option value=\"" + esc + "\">" + esc + " (" +
+                    String(WiFi.RSSI(order[i])) + " dBm" +
+                    (WiFi.encryptionType(order[i]) == WIFI_AUTH_OPEN ? "" : ", 鍵あり") +
+                    ")</option>";
+  }
+  Serial.printf("Wi-Fi scan: %d networks\n", n);
+  WiFi.scanDelete();
+}
+
 static void send_form(const Settings *s, const char *error) {
   String page = FPSTR(PAGE_HEAD);
   page += FW_VERSION;
@@ -72,7 +119,13 @@ static void send_form(const Settings *s, const char *error) {
     page += "</p>";
   }
   String form = FPSTR(PAGE_FORM);
+  form.replace("%APLIST%", scan_options);
   form.replace("%SSID%", html_escape(s->ssid));
+  bool has_saved_password = saved_settings.ssid[0] != '\0' && saved_settings.password[0] != '\0';
+  form.replace("%PASSHINT%", has_saved_password ? "(空欄なら前回のパスワードを維持)" : "");
+  form.replace("%PASSNOTE%", has_saved_password
+                                 ? "SSID が前回と同じなら空欄のままで前回のパスワードを使います"
+                                 : "パスワードなしの AP なら空欄");
   form.replace("%IP%", html_escape(s->agent_ip));
   form.replace("%PORT%", String(s->agent_port));
   form.replace("%NS%", html_escape(s->ros_namespace));
@@ -80,7 +133,12 @@ static void send_form(const Settings *s, const char *error) {
   server.send(200, "text/html; charset=utf-8", page);
 }
 
-static void handle_root() { send_form(&pending, nullptr); }
+static void handle_root() {
+  if (server.hasArg("scan")) {
+    scan_networks();
+  }
+  send_form(&pending, nullptr);
+}
 
 static void handle_save() {
   String ssid = server.arg("ssid");
@@ -107,7 +165,10 @@ static void handle_save() {
   uint16_t port_num = 0;
   toio_config_parse_port(port.c_str(), &port_num);
 
-  strncpy(pending.password, pass.c_str(), sizeof(pending.password) - 1);
+  // 空欄かつ SSID が前回と同じなら前回のパスワードを維持する
+  const char *password = toio_config_resolve_password(
+      ssid.c_str(), pass.c_str(), saved_settings.ssid, saved_settings.password);
+  strncpy(pending.password, password, sizeof(pending.password) - 1);
   pending.agent_port = port_num;
   settings_save(&pending);
   saved = true;
@@ -121,6 +182,7 @@ static void handle_not_found() {
 }
 
 void config_portal_run(const Settings *current, void (*led_tick)()) {
+  saved_settings = *current;
   pending = *current;
   pending.password[0] = '\0';
   saved = false;
@@ -130,7 +192,9 @@ void config_portal_run(const Settings *current, void (*led_tick)()) {
   char ap_name[32];
   toio_config_ap_name(mac, ap_name, sizeof(ap_name));
 
-  WiFi.mode(WIFI_AP);
+  // AP を立てたままスキャンできるよう AP+STA モードにする
+  WiFi.mode(WIFI_AP_STA);
+  scan_networks();
   WiFi.softAPConfig(AP_IP, AP_IP, AP_MASK);
   WiFi.softAP(ap_name);
   dns.start(53, "*", AP_IP);

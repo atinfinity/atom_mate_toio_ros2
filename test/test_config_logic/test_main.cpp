@@ -120,6 +120,25 @@ void test_error_messages_are_non_empty_for_errors(void) {
   TEST_ASSERT_TRUE(strlen(toio_config_error_message(TOIO_CONFIG_ERR_NAMESPACE_INVALID)) > 0);
 }
 
+// --- パスワードの維持 ---
+
+void test_empty_password_with_same_ssid_keeps_saved_password(void) {
+  TEST_ASSERT_EQUAL_STRING("old-secret",
+                           toio_config_resolve_password("home", "", "home", "old-secret"));
+}
+
+void test_empty_password_with_different_ssid_becomes_empty(void) {
+  TEST_ASSERT_EQUAL_STRING("", toio_config_resolve_password("other", "", "home", "old-secret"));
+}
+
+void test_new_password_overrides_saved_password(void) {
+  TEST_ASSERT_EQUAL_STRING("new", toio_config_resolve_password("home", "new", "home", "old"));
+}
+
+void test_empty_password_without_saved_settings_stays_empty(void) {
+  TEST_ASSERT_EQUAL_STRING("", toio_config_resolve_password("home", "", "", ""));
+}
+
 // --- AP 名 ---
 
 void test_ap_name_uses_last_two_mac_bytes(void) {
@@ -150,6 +169,10 @@ int main(int argc, char **argv) {
   RUN_TEST(test_namespace_invalid);
   RUN_TEST(test_validate_all_reports_first_error);
   RUN_TEST(test_error_messages_are_non_empty_for_errors);
+  RUN_TEST(test_empty_password_with_same_ssid_keeps_saved_password);
+  RUN_TEST(test_empty_password_with_different_ssid_becomes_empty);
+  RUN_TEST(test_new_password_overrides_saved_password);
+  RUN_TEST(test_empty_password_without_saved_settings_stays_empty);
   RUN_TEST(test_ap_name_uses_last_two_mac_bytes);
   RUN_TEST(test_ap_name_truncates_to_buffer);
   return UNITY_END();

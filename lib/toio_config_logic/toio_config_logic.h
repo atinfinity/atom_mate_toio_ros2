@@ -144,6 +144,18 @@ inline const char *toio_config_error_message(toio_config_error_t e) {
   return "";
 }
 
+// 保存時に使う Wi-Fi パスワードを決める。
+// 入力が空で、SSID が保存済みのものと同じなら前回のパスワードを維持する
+// (設定ページはパスワードを表示しないため、SSID 以外だけ直したいときに再入力を不要にする)。
+inline const char *toio_config_resolve_password(const char *new_ssid, const char *new_password,
+                                                const char *saved_ssid,
+                                                const char *saved_password) {
+  if (new_password[0] == '\0' && saved_ssid[0] != '\0' && strcmp(new_ssid, saved_ssid) == 0) {
+    return saved_password;
+  }
+  return new_password;
+}
+
 // 設定モード時の AP 名: "AtomToio-XXXX"(XXXX = MAC アドレス下位 2 バイトの 16 進大文字)
 inline void toio_config_ap_name(const uint8_t mac[6], char *out, size_t out_size) {
   static const char hex[] = "0123456789ABCDEF";
