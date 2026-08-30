@@ -18,16 +18,16 @@
 
 1. ATOM Matrix を USB で PC に接続する
 2. PC 版 Chrome / Edge で **インストールページ** <https://atinfinity.github.io/atom_mate_toio_ros2/> を開く
-3. 「CONNECT」を押し、表示されたシリアルポートを選んで「接続」する
-4. 「INSTALL」を選ぶ。保存済みの Wi-Fi / agent 設定を消したい場合だけ「Erase device」にチェックを入れる
+3. 配信モードを選んで「CONNECT」を押す: **Range(標準)** は `sensor_msgs/Range` を `/toio/range` に、**LaserScan** は `sensor_msgs/LaserScan` を `/toio/scan` に配信します。迷ったら Range
+4. 表示されたシリアルポートを選んで「接続」し、「INSTALL」を選ぶ。保存済みの Wi-Fi / agent 設定を消したい場合だけ「Erase device」にチェックを入れる
 
 ATOM が認識されない場合は、[FTDI VCP ドライバ](https://docs.m5stack.com/en/download)をインストールしてください。Safari / Firefox / スマホは Web Serial に対応していないため使えません。
 
-ブラウザから書き込まれるのは range モード(`sensor_msgs/Range`)のバイナリです。scan モードを使う場合は、[GitHub Release](https://github.com/atinfinity/atom_mate_toio_ros2/releases) の `-scan.app.bin` を `esptool.py write_flash 0x10000` で書き込むか、B の手順で自分でビルドしてください。
+モードを入れ替えたいときは、もう一方のボタンで書き込み直すだけです(Wi-Fi などの設定は残ります)。
 
 ### B. 自分でビルドする
 
-コードを変更したい場合や scan モードを使いたい場合の手順です。ビルド環境は Docker か、ホストへの PlatformIO インストールのどちらかを選びます。
+コードを変更したい場合の手順です。ビルド環境は Docker か、ホストへの PlatformIO インストールのどちらかを選びます。
 
 #### B-1. Docker でビルドする
 
@@ -170,7 +170,7 @@ ros2 topic hz /toio/scan        # 約 10Hz
 
 ## リリース手順(メンテナ向け)
 
-`v*` タグを push すると CI がファームウェアをビルドし、GitHub Release(`merged.bin` / `app.bin` / `-scan.app.bin`)の作成と、インストールページ(GitHub Pages)の更新を行います。
+`v*` タグを push すると CI がファームウェアを両モードでビルドし、GitHub Release(`merged.bin` / `app.bin`、それぞれ `-scan` 版も)の作成と、インストールページ(GitHub Pages)の更新を行います。
 
 ```bash
 git tag v0.1.0 && git push origin v0.1.0
