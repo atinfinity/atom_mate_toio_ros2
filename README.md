@@ -24,12 +24,12 @@ cp include/config.h.example include/config.h   # Wi-Fi と agent の IP を設�
 pio run -t upload                              # ビルド & 書き込み
 
 # PC 側で micro-ros-agent を起動(Docker の場合)
-docker run -it --rm --net=host microros/micro-ros-agent:jazzy udp4 --port 8888
+docker compose up agent                       # macOS / Windows の Docker Desktop でも可
 
 ros2 topic echo /toio/range                    # 手をかざすと range が変化する
 ```
 
-詳しい手順(macOS で必要な追加ツールなど)は[セットアップガイド](docs/setup.md)を参照してください。
+詳しい手順(Docker でのビルド、Ubuntu / macOS での PlatformIO のインストールなど)は[セットアップガイド](docs/setup.md)を参照してください。
 
 ## ドキュメント
 
