@@ -53,7 +53,7 @@ static rcl_timer_t timer;
 static rclc_executor_t executor;
 #if PUBLISH_MODE == PUBLISH_MODE_SCAN
 static sensor_msgs__msg__LaserScan scan_msg;
-static float scan_ranges[1];
+static float scan_ranges[TOIO_SCAN_NUM_READINGS];
 #else
 static sensor_msgs__msg__Range range_msg;
 #endif
@@ -118,8 +118,11 @@ static void timer_callback(rcl_timer_t *timer_handle, int64_t last_call_time) {
   }
 #if PUBLISH_MODE == PUBLISH_MODE_SCAN
   fill_stamp(&scan_msg.header.stamp);
-  // 検出なし(無効測定)は +Inf で表現
-  scan_msg.ranges.data[0] = toio_range_to_meters(last_range_mm, range_valid);
+  // 検出なし(無効測定)は +Inf で表現。単一点センサのため全ビームに同一距離を設定する。
+  const float scan_r = toio_range_to_meters(last_range_mm, range_valid);
+  for (size_t i = 0; i < scan_msg.ranges.size; ++i) {
+    scan_msg.ranges.data[i] = scan_r;
+  }
   rcl_publish(&publisher, &scan_msg, NULL);
 #else
   fill_stamp(&range_msg.header.stamp);
@@ -140,7 +143,7 @@ static void set_frame_id(std_msgs__msg__Header *header) {
 static void init_msg() {
   sensor_msgs__msg__LaserScan__init(&scan_msg);
   set_frame_id(&scan_msg.header);
-  // 単一点センサのため正面方向 1 ビームの LaserScan として配信する
+  // 単一点センサを FoV 分の複数ビーム LaserScan として配信する(angle_increment 非ゼロ)
   const toio_scan_params_t p = toio_scan_params(PUBLISH_PERIOD_MS);
   scan_msg.angle_min = p.angle_min;
   scan_msg.angle_max = p.angle_max;
@@ -149,17 +152,19 @@ static void init_msg() {
   scan_msg.scan_time = p.scan_time;
   scan_msg.range_min = p.range_min;
   scan_msg.range_max = p.range_max;
-  scan_ranges[0] = 0.0f;
+  for (uint32_t i = 0; i < p.num_readings; ++i) {
+    scan_ranges[i] = 0.0f;
+  }
   scan_msg.ranges.data = scan_ranges;
-  scan_msg.ranges.size = 1;
-  scan_msg.ranges.capacity = 1;
+  scan_msg.ranges.size = p.num_readings;
+  scan_msg.ranges.capacity = p.num_readings;
 }
 #else
 static void init_msg() {
   sensor_msgs__msg__Range__init(&range_msg);
   set_frame_id(&range_msg.header);
   range_msg.radiation_type = sensor_msgs__msg__Range__INFRARED;
-  range_msg.field_of_view = 0.44f;  // VL53L0X の FoV 約25°
+  range_msg.field_of_view = TOIO_FOV_RAD;  // VL53L0X の FoV 約25°
   range_msg.min_range = TOIO_RANGE_MIN_M;
   range_msg.max_range = TOIO_RANGE_MAX_M;
   range_msg.range = 0.0f;

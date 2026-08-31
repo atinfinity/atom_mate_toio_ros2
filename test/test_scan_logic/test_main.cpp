@@ -8,12 +8,23 @@ void tearDown(void) {}
 
 // --- toio_scan_params ---
 
-void test_scan_is_single_front_beam(void) {
+void test_scan_spans_symmetric_fov(void) {
   const toio_scan_params_t p = toio_scan_params(100);
-  TEST_ASSERT_EQUAL_FLOAT(0.0f, p.angle_min);
-  TEST_ASSERT_EQUAL_FLOAT(0.0f, p.angle_max);
-  TEST_ASSERT_EQUAL_FLOAT(0.0f, p.angle_increment);
+  // FoV を中心対称に配置(正面が 0 rad)
+  TEST_ASSERT_FLOAT_WITHIN(1e-6f, -TOIO_FOV_RAD / 2.0f, p.angle_min);
+  TEST_ASSERT_FLOAT_WITHIN(1e-6f, TOIO_FOV_RAD / 2.0f, p.angle_max);
+  TEST_ASSERT_FLOAT_WITHIN(1e-6f, TOIO_FOV_RAD, p.angle_max - p.angle_min);
   TEST_ASSERT_EQUAL_FLOAT(0.0f, p.time_increment);
+}
+
+// 退化スキャン回帰防止: angle_increment は非ゼロで、
+// angle_min + (num_readings-1)*angle_increment == angle_max を満たすこと。
+void test_scan_angle_increment_is_nonzero_and_consistent(void) {
+  const toio_scan_params_t p = toio_scan_params(100);
+  TEST_ASSERT_TRUE(p.num_readings >= 2);
+  TEST_ASSERT_TRUE(p.angle_increment > 0.0f);
+  const float last = p.angle_min + (float)(p.num_readings - 1) * p.angle_increment;
+  TEST_ASSERT_FLOAT_WITHIN(1e-5f, p.angle_max, last);
 }
 
 void test_scan_time_matches_publish_period(void) {
@@ -49,7 +60,8 @@ int main(int argc, char **argv) {
   (void)argc;
   (void)argv;
   UNITY_BEGIN();
-  RUN_TEST(test_scan_is_single_front_beam);
+  RUN_TEST(test_scan_spans_symmetric_fov);
+  RUN_TEST(test_scan_angle_increment_is_nonzero_and_consistent);
   RUN_TEST(test_scan_time_matches_publish_period);
   RUN_TEST(test_scan_range_bounds_match_sensor_spec);
   RUN_TEST(test_scan_beam_value_for_valid_measurement);
